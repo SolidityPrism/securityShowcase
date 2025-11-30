@@ -1,5 +1,7 @@
 # SecurityShowcase - Solidity Audit Test Suite
 
+⚠️ **DISCLAIMER**: This repository contains **deliberately vulnerable code for testing and educational purposes only**. These contracts are intentionally insecure and should **NEVER** be used in production or deployed to mainnet. They are designed to stress-test audit tools and demonstrate vulnerability patterns.
+
 ## Overview
 
 This repository contains a deliberately vulnerable ERC20 token system designed to stress-test smart contract auditing tools. It simulates a realistic multi-file token ecosystem with intentional vulnerabilities of varying difficulty levels.

@@ -1,3 +1,5 @@
+
+edit
 # SecurityShowcase - Solidity Audit Test Suite
 
 ⚠️ **DISCLAIMER**: This repository contains **deliberately vulnerable code for testing and educational purposes only**. These contracts are intentionally insecure and should **NEVER** be used in production or deployed to mainnet. They are designed to stress-test audit tools and demonstrate vulnerability patterns.

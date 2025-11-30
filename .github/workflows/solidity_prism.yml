@@ -1,0 +1,55 @@
+
+# .github/workflows/solidity_prism.yml
+
+name: 'Solidity Prism Audit'
+
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  run-audit:
+    # This job only runs when a PR comment starts with "/audit"
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/audit')
+    permissions:
+      pull-requests: write    
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Parse the command from the comment (e.g., /audit gas deep)
+      - name: Parse Command
+        id: parse_command
+        run: |
+          COMMENT="${{ github.event.comment.body }}"
+          AUDIT_TYPE=$(echo "$COMMENT" | awk '{print $2}')
+          if [ -z "$AUDIT_TYPE" ]; then AUDIT_TYPE="full"; fi
+          ANALYSIS_MODE=$(echo "$COMMENT" | awk '{print $3}')
+          if [ -z "$ANALYSIS_MODE" ]; then ANALYSIS_MODE="standard"; fi
+          echo "audit_type=$AUDIT_TYPE" >> $GITHUB_OUTPUT
+          echo "analysis_mode=$ANALYSIS_MODE" >> $GITHUB_OUTPUT
+
+      # Step 2: Get the exact code from the Pull Request
+      - name: Get PR's Head SHA
+        id: get_sha
+        run: |
+          PR_DATA=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" ${{ github.event.issue.pull_request.url }})
+          HEAD_SHA=$(echo $PR_DATA | jq -r '.head.sha')
+          echo "sha=$HEAD_SHA" >> $GITHUB_OUTPUT
+      
+      # Step 3: Trigger the Solidity Prism backend API
+      - name: Trigger Audit Backend
+        run: |
+          curl -X POST "https://audit.solidityprism.dev/api/v1/github-action-trigger" \
+          -H "Content-Type: application/json" \
+          -H "X-Action-Secret: ${{ secrets.PRISM_ACTION_SECRET }}" \
+          -d '{
+            "repository_id": "${{ github.event.repository.id }}",
+            "repository_name": "${{ github.event.repository.full_name }}",
+            "owner_id": "${{ github.event.repository.owner.id }}",            
+            "repository_url": "${{ github.event.repository.git_url }}",
+            "pr_number": "${{ github.event.issue.number }}",
+            "commit_sha": "${{ steps.get_sha.outputs.sha }}",
+            "comments_url": "${{ github.event.issue.comments_url }}",
+            "github_token": "${{ github.token }}",
+            "audit_type": "${{ steps.parse_command.outputs.audit_type }}",
+            "analysis_mode": "${{ steps.parse_command.outputs.analysis_mode }}"
+          }'   
